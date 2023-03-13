@@ -1,0 +1,559 @@
+Sub Obtain_data_from_search()
+'by Robert Brownsmith - NHS HIOW ICB 10R
+
+Dim Source_Workbook As Workbook
+
+Dim myPath As String
+Dim myFile As String
+Dim myExtension As String
+Dim FldrPicker As FileDialog
+
+'Define Object for Target Workbook
+Dim Target_Workbook As Workbook
+Set Target_Workbook = ThisWorkbook
+
+'Define worksheets
+Dim Target_Worksheet As Worksheet
+Dim Source_Worksheet As Worksheet
+
+'Optimize Macro Speed
+  Application.ScreenUpdating = False
+  Application.EnableEvents = False
+  'Application.Calculation = xlCalculationManual
+
+'Retrieve Target Folder Path From User
+MsgBox ("Select the FOLDER where the CSV search is located.")
+
+  Set FldrPicker = Application.FileDialog(msoFileDialogFolderPicker)
+
+    With FldrPicker
+      .Title = "Select A Target Folder"
+      .AllowMultiSelect = False
+        If .Show <> -1 Then GoTo NextCode
+        myPath = .SelectedItems(1) & "\"
+    End With
+
+'In Case of Cancel
+NextCode:
+  myPath = myPath
+  If myPath = "" Then GoTo ResetSettings
+  
+'set documents
+Set Source_Workbook = Workbooks.Open(Filename:=myPath & "ShowPatients.csv")
+
+        
+'Ensure Workbook has opened before moving on to next line of code
+DoEvents
+
+'copy from reports into current workbook
+      
+Source_Workbook.Worksheets(1).Copy Target_Workbook.Worksheets(1)
+
+    
+'Save and Close Workbook
+Source_Workbook.Close SaveChanges:=False
+
+ResetSettings:
+  'Reset Macro Optimization Settings
+    Application.EnableEvents = True
+    Application.Calculation = xlCalculationAutomatic
+    Application.ScreenUpdating = True
+
+'Message Box when tasks are completed
+  MsgBox "Import Complete"
+
+End Sub
+
+
+Sub MakeRowDrugToColumn()
+'by Robert Brownsmith - NHS HIOW ICB 10R
+
+  'make declarations
+  Dim ws As Worksheet
+  Dim Rows_Used As Long
+  Dim wb As Workbook
+  Dim Drug1_range, Drug2_range, Drug3_range, Drug4_range, Drug5_range, Drug6_range, Drug7_range, Drug8_range, Drug9_range As Range
+  Dim Drug1_NewHome, Drug2_NewHome, Drug3_NewHome, Drug4_NewHome, Drug5_NewHome, Drug6_NewHome, Drug7_NewHome, Drug8_NewHome, Drug9_NewHome As Range
+  Dim Patients As Range
+    
+  Set wb = ActiveWorkbook
+    ' Set wb = ThisWorkbook
+  Set ws = wb.Worksheets(1)
+    
+  
+  '  Initialization
+  MsgBox ("This only works for data formatted in columns: nhs number, name usual gp, consultation date 1, medication 1, dose 1, consultation date 2, medication 2,...")
+  
+  ' format of data nhs number, name usual gp, consultation date 1, medication 1, dose 1, consultation date 2, medication 2....
+  
+  Rows_Used = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+  Number_of_patients = Rows_Used - 1
+  Set Drug1_range = ws.Range("D2:F" & Rows_Used)
+  Set Drug2_range = ws.Range("g2:i" & Rows_Used)
+  Set Drug3_range = ws.Range("j2:l" & Rows_Used)
+  Set Drug4_range = ws.Range("m2:o" & Rows_Used)
+  Set Drug5_range = ws.Range("p2:r" & Rows_Used)
+  Set Drug6_range = ws.Range("s2:u" & Rows_Used)
+  Set Drug7_range = ws.Range("v2:x" & Rows_Used)
+  Set Drug8_range = ws.Range("y2:aa" & Rows_Used)
+  Set Drug9_range = ws.Range("ab2:ad" & Rows_Used)
+  Set Patients = ws.Range("A2:C" & Rows_Used)
+  Set Drug2_NewHome = ws.Range("D" & Rows_Used + 1 & ":F" & Rows_Used + Number_of_patients)
+  Set Drug3_NewHome = ws.Range("D" & (Rows_Used + Number_of_patients + 1) & ":F" & (Rows_Used + (Number_of_patients * 2)))
+  Set Drug4_NewHome = ws.Range("D" & (Rows_Used + (Number_of_patients * 2) + 1) & ":F" & (Rows_Used + (Number_of_patients * 3)))
+  Set Drug5_NewHome = ws.Range("D" & (Rows_Used + (Number_of_patients * 3) + 1) & ":F" & (Rows_Used + (Number_of_patients * 4)))
+  Set Drug6_NewHome = ws.Range("D" & (Rows_Used + (Number_of_patients * 4) + 1) & ":F" & (Rows_Used + (Number_of_patients * 5)))
+  Set Drug7_NewHome = ws.Range("D" & (Rows_Used + (Number_of_patients * 5) + 1) & ":F" & (Rows_Used + (Number_of_patients * 6)))
+  Set Drug8_NewHome = ws.Range("D" & (Rows_Used + (Number_of_patients * 6) + 1) & ":F" & (Rows_Used + (Number_of_patients * 7)))
+  Set Drug9_NewHome = ws.Range("D" & (Rows_Used + (Number_of_patients * 7) + 1) & ":F" & (Rows_Used + (Number_of_patients * 8)))
+  
+  'Copy the drugs
+  Drug2_range.Cut _
+    Destination:=Drug2_NewHome
+      
+  Drug3_range.Cut _
+    Destination:=Drug3_NewHome
+    
+  Drug4_range.Cut _
+    Destination:=Drug4_NewHome
+    
+  Drug5_range.Cut _
+    Destination:=Drug5_NewHome
+   
+  Drug6_range.Cut _
+    Destination:=Drug6_NewHome
+    
+  Drug7_range.Cut _
+    Destination:=Drug7_NewHome
+      
+  Drug8_range.Cut _
+    Destination:=Drug8_NewHome
+      
+  Drug9_range.Cut _
+    Destination:=Drug9_NewHome
+      
+  'fill down the patients
+  Patients.AutoFill Destination:=Range("A2:C" & ((Number_of_patients * 9) + 1)), Type:=xlFillCopy
+    
+  'Remove rows with blanks
+  Columns("D:D").Select 'breaks if adjacent cells ar blank. amend to just one column if so.
+  Selection.SpecialCells(xlCellTypeBlanks).Select
+  Selection.EntireRow.Delete
+  
+  'Remove duplicate drugs
+  ws.Range("$A$1:$AD$" & ((Number_of_patients * 9) + 1)).RemoveDuplicates Columns:=Array(1, 2, 5), _
+        Header:=xlYes
+  
+  
+  End Sub
+
+Function doseParse(doseInput As Range) As String
+'by Robert Brownsmith - NHS HIOW ICB 10R
+    
+    Dim doseInputStr As String
+    Dim doseInputStr1 As String
+    Dim doseInputStr2 As String
+    Dim testCheck As Boolean
+    Dim maxSduPerDose As Single
+    Dim maxFreqAdmin As Single
+   
+   'convert string to upper case and remove extraneous spaces -need to do a regex to remove consecutive ... full stops
+    doseInputStr1 = removeDots(doseInput)
+    'Debug.Print doseInputStr1
+    'make it uppercase
+    doseInputStr2 = Application.Trim(UCase(doseInputStr1))
+    'Debug.Print doseInputStr2, "2"
+    'doseInputStr = Application.Trim(UCase(doseInput.Value))
+    'remove durations that may confuse the formula e.g. for 2 weeks
+    If doseInputStr2 Like "*FOR *" Then
+        doseInputStr = Left(doseInputStr2, InStr(1, doseInputStr2, "FOR ") - 1)
+    Else
+        doseInputStr = doseInputStr2
+    'Debug.Print doseInputStr
+    End If
+    
+    
+   'account for stated maximum
+   If doseInputStr Like "*MAX*" Or doseInputStr Like "*TOTAL*" = True Then
+        doseParse = "Refer to Maximum stated in dose and calculate manually"
+   Else
+   
+   'find number of dose units per administration - need to rethink this to capture 5ml spoonfuls properly **HERE**
+      
+        If doseInputStr Like "*5ML*10ML*" Or doseInputStr Like "* 10ML*" Or doseInputStr Like "* 10 ML*" Or doseInputStr Like "* 5*10ML*" Or doseInputStr Like "* 5*10 ML*" Or doseInputStr Like "5*10ML*" Or doseInputStr Like "*ONE OR TWO*SPOON*" = True Then
+            maxSduPerDose = 10
+        ElseIf doseInputStr Like "*2.5*5*" Or doseInputStr Like "* 5ML*" Or doseInputStr Like "* 5 ML*" Or doseInputStr Like "5ML [!-]*" Or doseInputStr Like "*ONE [!TO]*SPOON*" Or doseInputStr Like "1X5ML*" = True Then
+            maxSduPerDose = 5
+        ElseIf doseInputStr Like "*1-4 *" = True Then
+            maxSduPerDose = 4
+        ElseIf doseInputStr Like "*1.25*2.5ML*" Or doseInputStr Like "* 2.5ML*" Or doseInputStr Like "* 2.5 ML*" Or doseInputStr Like "2.5ML[S ][!-]*" = True Then
+            maxSduPerDose = 2.5
+        ElseIf doseInputStr Like "*ONE OR TWO*[!5]*" Or doseInputStr Like "*TWO*[!5]*" Or doseInputStr Like "*1 OR 2*" Or doseInputStr Like "*1-2*" Or doseInputStr Like "*1 - 2*" Or doseInputStr Like "*1 -2*" Or doseInputStr Like "2 *" Or doseInputStr Like "*APPLY 2*" Or doseInputStr Like "* 2 *" Or doseInputStr Like "2[QTBO]D*" = True Then
+            maxSduPerDose = 2
+        ElseIf doseInputStr Like "* 1.25ML*" = True Then
+            maxSduPerDose = 1.25
+        ElseIf doseInputStr Like "* ONE *" Or doseInputStr Like "1 *" Or doseInputStr Like "ONE *" Or doseInputStr Like "TAKE 1 [!to-]*" Or doseInputStr Like "TAKE ONE [!to-]*" Or doseInputStr Like "1[QTBO]D*" = True Then
+            maxSduPerDose = 1
+        Else
+            maxSduPerDose = 0
+        End If
+        'Debug.Print maxSduPerDose
+        
+        'find dose frequency
+        
+        If doseInputStr Like "*SIX TIMES*" Or doseInputStr Like "*6 TIMES*" Or doseInputStr Like "*FOUR*SIX*" Or doseInputStr Like "*EVERY 4*" Or doseInputStr Like "*EVERY FOUR*" Or doseInputStr Like "*4 HOURLY*" Or doseInputStr Like "*FOUR HOURLY*" Or doseInputStr Like "*4-6*" = True Then
+            maxFreqAdmin = 6
+        ElseIf doseInputStr Like "*FIVE TIMES*" Or doseInputStr Like "*5 TIMES*" = True Then
+            maxFreqAdmin = 5
+        ElseIf doseInputStr Like "*FOUR TIMES*" Or doseInputStr Like "*4 TIMES*" Or doseInputStr Like "*EVERY 6*" Or doseInputStr Like "*EVERY SIX [!T-]*" Or doseInputStr Like "*QDS*" Or doseInputStr Like "*QID*" = True Then
+            maxFreqAdmin = 4
+        ElseIf doseInputStr Like "*THREE TIMES*" Or doseInputStr Like "*EVERY 8*" Or doseInputStr Like "*TDS*" Or doseInputStr Like "*3 TIMES*" = True Then
+            maxFreqAdmin = 3
+        ElseIf doseInputStr Like "*TWO TIMES*" Or doseInputStr Like "*TWICE A DAY*" Or doseInputStr Like "*TWICE DAILY*" Or doseInputStr Like "*EVERY 12*" Or doseInputStr Like "*EVERY TWELVE*" Or doseInputStr Like "*MORNING AND NIGHT*" Or doseInputStr Like "*MORNIND AND EVENING*" Or doseInputStr Like "*BD*" = True Then
+            maxFreqAdmin = 2
+        ElseIf doseInputStr Like "*ONCE*" Or doseInputStr Like "*EVERY DAY*" Or doseInputStr Like "#?NOCTE*" Or doseInputStr Like "*EVERY 24*" Or doseInputStr Like "*[!AD] AT NIGHT*" Or doseInputStr Like "*[!AD] AT BED*" Or doseInputStr Like "*[!C][!NS] A DAY" Or doseInputStr Like "*[!T]*DAILY" Or doseInputStr Like "[#]ON" = True Then
+            maxFreqAdmin = 1
+        ElseIf doseInputStr Like "*EVERY 3 DAY*" Or doseInputStr Like "*TWICE A WEEK*" Or doseInputStr Like "*WEEKLY*" Or doseInputStr Like "*EVERY 72*" Or doseInputStr Like "*EVERY 7 DAYS*" = True Then
+            maxFreqAdmin = 24
+        Else
+            maxFreqAdmin = 0
+        End If
+        'Debug.Print maxFreqAdmin
+        
+                
+        'account for no match
+        If maxSduPerDose = 0 Or maxFreqAdmin = 0 Then
+            doseParse = "dose not parsed"
+        Else
+            doseParse = maxSduPerDose * maxFreqAdmin
+        End If
+    End If
+End Function
+
+Function removeDots(doseInput1 As Range) As String
+'by Robert Brownsmith - NHS HIOW ICB 10R
+
+    Dim strPattern1 As String
+    Dim strInput1 As String
+    Dim strReplace1 As String
+    Dim strOutput As String
+    
+    Static regEx1 As Object
+           
+    If regEx1 Is Nothing Then Set regEx1 = CreateObject("VBScript.RegExp")
+        
+    strPattern1 = "[\.]{2,10}"
+    'Debug.Print strPattern1
+        
+    If strPattern1 <> "" Then
+        strInput1 = doseInput1.Value
+        'Debug.Print strInput1
+        strReplace1 = " "
+        
+        With regEx1
+            .Global = True
+            .MultiLine = True
+            .IgnoreCase = False
+            .Pattern = strPattern1
+        End With
+        
+        If regEx1.Test(strInput1) Then
+            removeDots = regEx1.Replace(strInput1, strReplace1)
+            'extractedStrength = regEx.Execute(strInput)(0).Value
+            
+            
+        Else
+            removeDots = strInput1
+        End If
+        'Debug.Print removeDots
+    End If
+End Function
+
+Function extractedStrength(formDesc As Range) As String
+'by Robert Brownsmith - NHS HIOW ICB 10R
+
+    Dim strPattern As String
+    Dim strInput As String
+    Dim strReplace As String
+    Dim strOutput As String
+    
+    Static regEx2 As Object
+    
+    Set regEx2 = Nothing
+        
+    If regEx2 Is Nothing Then Set regEx2 = CreateObject("VBScript.RegExp")
+        
+    strPattern = "[0-9]+\.?[0-9]*?[a-zA-Z]+\/?[0-9]*\.?[0-9]*[a-zA-Z]*|[0-9]+\.?[0-9]*%"
+    
+    If strPattern <> "" Then
+        strInput = formDesc.Value
+        strReplace = ""
+        
+        With regEx2
+            .Global = True
+            .MultiLine = True
+            .IgnoreCase = False
+            .Pattern = strPattern
+        End With
+        
+        If regEx2.Test(strInput) Then
+            extractedStrength = regEx2.Execute(strInput)(0).Value
+        Else
+            extractedStrength = "Strength pattern not matched"
+        End If
+        
+    End If
+End Function
+
+Function maxDailyDose(formulation As Range, doseInstructions As Range) As String
+'by Robert Brownsmith - NHS HIOW ICB 10R
+
+    'call functions above and calculate mdd accounting for units
+    Dim formulationStr As String
+    Dim doseInstructionsStr As String
+    Dim unitSplit() As String
+    Dim unitsStr As String
+    Dim preSlashQuant As String
+    Dim postSlashQuant As String
+    Dim preSlashNum As Double
+    Dim postSlashNum As Double
+    Dim maxDailyDoseUnits As String
+      
+    'deconstruct units
+    unitsStr = extractedStrength(formulation)
+    If unitsStr Like "*/*" Then
+        unitSplit = Split(unitsStr, "/")
+        preSlashQuant = unitSplit(0)
+        postSlashQuant = unitSplit(1)
+    ElseIf unitsStr Like "*[%]*" Then
+        unitSplit = Split(unitsStr, "%")
+        preSlashQuant = unitSplit(0)
+        postSlashQuant = ""
+    Else
+        preSlashQuant = unitsStr
+        postSlashQuant = ""
+    End If
+    
+    'seperate value from units and assign to variables.
+    preSlashNum = Val(preSlashQuant)
+    If UCase(postSlashQuant) Like "*M[GL]" Then 
+        postSlashNum = Val(postSlashQuant)
+    Else
+        postSlashNum = 1
+    End If
+    'Debug.Print postSlashNum
+    
+    'contextualise units to inform MDD calculation
+    maxDailyDoseUnits = doseParse(doseInstructions)
+    If maxDailyDoseUnits Like "[a-zA-Z]*" Then 'testing dose parse has textual message for maximum etc
+        maxDailyDose = maxDailyDoseUnits 'catch errors
+    ElseIf UCase(postSlashQuant) Like "*ML*" Then
+        maxDailyDose = (Val(maxDailyDoseUnits) / postSlashNum) * preSlashNum & Replace(preSlashQuant, preSlashNum, "")
+    ElseIf UCase(postSlashQuant) Like "*MG*" Then
+        maxDailyDose = (Val(maxDailyDoseUnits) * preSlashNum) & Replace(preSlashQuant, preSlashNum, "") & "/" & (Val(maxDailyDoseUnits) * postSlashNum) & Replace(postSlashQuant, postSlashNum, "")
+        Debug.Print maxDailyDose, preSlashNum, postSlashNum
+    Else
+        maxDailyDose = preSlashNum * Val(maxDailyDoseUnits) & Replace(preSlashQuant, preSlashNum, "")
+    End If
+        
+    
+End Function
+
+
+Function morphineDoseEquivalent(formulation As Range, doseInstructions As Range) As Variant
+'by Robert Brownsmith - NHS HIOW ICB 10R
+
+    'call functions above and calculate mde accounting for units
+    Dim formulationStr As String
+    Dim doseInstructionsStr As String
+    Dim unitSplit() As String
+    Dim unitsStr As String
+    Dim preSlashQuant As String
+    Dim postSlashQuant As String
+    Dim preSlashNum As Double
+    Dim postSlashNum As Double
+    Dim maxDailyDoseUnits As String
+    Dim conversionFactor As Double
+    Dim maxDailyDose As String
+    Dim maxDailyDoseSplit() As String
+    Dim opioidComponent As String
+    Dim opioidComponentUnits As String
+           
+    'deconstruct units
+    unitsStr = extractedStrength(formulation)
+    If unitsStr Like "*/*" Then
+        unitSplit = Split(unitsStr, "/")
+        preSlashQuant = unitSplit(0)
+        postSlashQuant = unitSplit(1)
+    ElseIf unitsStr Like "*[%]*" Then
+        unitSplit = Split(unitsStr, "%")
+        preSlashQuant = unitSplit(0)
+        postSlashQuant = ""
+    Else
+        preSlashQuant = unitsStr
+        postSlashQuant = ""
+    End If
+    
+    'seperate value from units and assign to variables.
+    preSlashNum = Val(preSlashQuant)
+    'postSlashNum = Val(postSlashQuant)
+    
+    If UCase(postSlashQuant) Like "*M[GL]" Then 
+        postSlashNum = Val(postSlashQuant)
+    Else
+        postSlashNum = 1
+    End If
+    'Debug.Print postSlashNum
+    
+    
+    'contextualise units to inform MDD calculation
+    maxDailyDoseUnits = doseParse(doseInstructions)
+    If maxDailyDoseUnits Like "[a-zA-Z]*" Then
+        maxDailyDose = maxDailyDoseUnits 'catch error here
+        'morphineDoseEquivalent = maxDailyDoseUnits
+    ElseIf UCase(postSlashQuant) Like "*ML*" Then
+        maxDailyDose = (Val(maxDailyDoseUnits) / postSlashNum) * preSlashNum & Replace(preSlashQuant, preSlashNum, "")
+    ElseIf UCase(postSlashQuant) Like "*MG*" Then
+        maxDailyDose = Val(maxDailyDoseUnits) * preSlashNum & Replace(preSlashQuant, preSlashNum, "") & "/" & Val(maxDailyDoseUnits) * postSlashNum & Replace(postSlashQuant, postSlashNum, "")
+    Else
+        maxDailyDose = preSlashNum * Val(maxDailyDoseUnits) & Replace(preSlashQuant, preSlashNum, "")
+    End If
+        
+    'Discern which opioid
+    formulationStr = UCase(formulation.Value)
+    'TRAMADOL
+    If formulationStr Like "*TRAM*" Then
+        conversionFactor = 0.1
+    'CODEINE
+    ElseIf formulationStr Like "CODEINE*" Or formulationStr Like "*ZAPAIN*" Or formulationStr Like "*SOLPAD*" Or formulationStr Like "*CODAMOL*" Or formulationStr Like "*MIGRALEVE*" Or formulationStr Like "*TYLEX*" Then
+        conversionFactor = 0.1
+    'DIHYDROCODEINE
+    ElseIf formulationStr Like "DIHYDROCODEINE*" Or formulationStr Like "*DYDRAMOL*" Or formulationStr Like "REMEDEINE*" Or formulationStr Like "*DHC*" Then
+        conversionFactor = 0.1
+    'MORPHINE
+    ElseIf formulationStr Like "*MORPHINE*" Or formulationStr Like "*MST*" Or formulationStr Like "*ZOMORPH*" Or formulationStr Like "*ORAMORPH*" Or formulationStr Like "*SEVREDOL*" Then
+        conversionFactor = 1
+    'FENTANYL patch
+    ElseIf formulationStr Like "*FENTANYL*" Or formulationStr Like "*DTRANS*" Or formulationStr Like "*MATRI*" Then
+        'conversionFactor = 100 'version with mcg
+        conversionFactor = 0.1
+    'TAPENTADOL
+    ElseIf formulationStr Like "*TAPENTADOL*" Or formulationStr Like "*PALEXIA*" Then
+        conversionFactor = 0.4
+    'BUPRENORPHINE
+    ElseIf formulationStr Like "*BUPRENORPHINE*" Or formulationStr Like "*BUTEC*" Or formulationStr Like "*BUTRANS*" Or formulationStr Like "*BUPEAZE*" Or formulationStr Like "*TRANSTEC*" Then
+        'conversionFactor = 100 'version with mcg
+        conversionFactor = 0.1
+    'temgesic/suboxone
+    ElseIf formulationStr Like "*BUPRENORPHINE*TAB*" Or formulationStr Like "*TEMGESIC*" Or formulationStr Like "*SUBOXONE*" Then
+        conversionFactor = 0.06
+    'OXYCODONE
+    ElseIf formulationStr Like "*OXYCODONE*" Or formulationStr Like "*SHORTEC*" Or formulationStr Like "*LONGTEC*" Or formulationStr Like "*OXYCONTIN*" Or formulationStr Like "*OXYNORM*" Or formulationStr Like "*TARGINACT*" Or formulationStr Like "*OXELTRA*" Then
+        conversionFactor = 1.5
+    'hydromorphone
+    ElseIf formulationStr Like "*HYDROMORPHONE*" Then
+        conversionFactor = 5
+    'METHADONE
+    ElseIf formulationStr Like "*METHADONE*" Or formulationStr Like "*PHYSEPTONE*" Then
+        'morphineDoseEquivalent = "seek specialist advice"
+        conversionFactor = 0
+    Else
+        'morphineDoseEquivalent = "formulation not recognised"
+        conversionFactor = 0
+    End If
+    
+    'get opioid component of MDD and convert
+    
+    If formulationStr Like "*METHADONE*" Or formulationStr Like "*PHYSEPTONE*" Then
+        morphineDoseEquivalent = "seek specialist advice"
+    ElseIf conversionFactor = 0 Then
+        morphineDoseEquivalent = "formulation not recognised"
+    ElseIf maxDailyDose Like "[a-zA-Z]*" Then
+        morphineDoseEquivalent = maxDailyDose
+    ElseIf maxDailyDose Like "*/*" Then
+        maxDailyDoseSplit = Split(maxDailyDose, "/")
+        opioidComponent = maxDailyDoseSplit(0)
+        morphineDoseEquivalent = (Val(opioidComponent) * conversionFactor)
+    Else
+        opioidComponent = maxDailyDose
+        morphineDoseEquivalent = (Val(opioidComponent) * conversionFactor)
+    End If
+    
+End Function
+
+Sub import_search_and_create_MDE_array()
+'by Robert Brownsmith - NHS HIOW ICB 10R
+
+    'import search
+    Call Obtain_data_from_search
+    'rearrange data
+    Call MakeRowDrugToColumn
+    
+    MsgBox ("This next process can take a long time. Be patient. Observe threads calculating percentage to 100% several times. Say yes to deleting sheets when prompted")
+            
+    'define variables
+    Dim ws As Worksheet
+    Dim Rows_Used As Long
+    Dim Unique_Patients As Long
+    Dim wb As Workbook
+    Dim patientList As Range
+    Dim arrayList As Range
+    Dim arrayRange As Range
+    Dim resultsRange As Range
+    
+    'set variables
+    Set wb = ThisWorkbook
+    Set ws = wb.Worksheets(1)
+    Set ws_Array = wb.Worksheets("Array")
+    Set ws_results = wb.Worksheets("Results")
+    Set ws_showpatients = wb.Worksheets("ShowPatients")
+    
+    Rows_Used = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    Set patientList = ws.Range("A2:B" & Rows_Used)
+    Set arrayList = ws_Array.Range("A2:B" & Rows_Used)
+    
+    'insert formula to calculate MDE
+    ws.Range("H2").Select
+    ActiveCell.Formula2 = "=morphineDoseEquivalent(E2,F2)"
+    
+    'and fill down
+    ws.Range("H2").Select
+    Selection.AutoFill Destination:=Range("H2:H" & (Rows_Used)), Type:=xlFillCopy
+    
+    'copy patient list to array
+    patientList.Copy Destination:=arrayList
+    
+    'remove duplicates
+    ws_Array.Range("$A:$B").RemoveDuplicates Columns:=Array(1, 2), Header _
+        :=xlYes
+          
+    'count how many
+    Unique_Patients = ws_Array.Cells(ws_Array.Rows.Count, "A").End(xlUp).Row
+    
+    'insert array formula and sum MDE formula
+    ws_Array.Range("C2:K2").FormulaArray = "=IFERROR(INDEX(ShowPatients!H:H,SMALL(IF($A2=ShowPatients!A:A,ROW(ShowPatients!H:H)- MIN(ROW(ShowPatients!A:A))+1,""""),COLUMN()-2)), """")"
+    ws_Array.Range("L2").Formula2 = "=SUM(C2:K2)"
+        
+    'fill down the formulae
+    ws_Array.Range("C2:L2").AutoFill Destination:=ws_Array.Range("C2:L" & Unique_Patients), Type:=xlFillDefault
+    
+    'copy values and delete array to make results easier to use without being interrupted by recalculations.
+    Set arrayRange = ws_Array.Range("A1:L" & Unique_Patients)
+    Set resultsRange = ws_results.Range("A1:L" & Unique_Patients)
+    
+    arrayRange.Copy
+    resultsRange.PasteSpecial xlPasteValues
+    ws_Array.Delete
+    ws_showpatients.Delete
+          
+    'rank MDE
+    resultsRange.Sort key1:=Range("L:L"), order1:=xlDescending, Header:=xlYes
+
+   'display results sheet
+    ws_results.Select
+    
+    'message box all done
+    MsgBox ("calculations complete!")
+    
+End Sub
+
